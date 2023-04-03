@@ -246,7 +246,7 @@ with st.sidebar:
 if selected == 'Home':
     col1, col2 = st.columns(2)
     with col1:
-        st.button("Log in to Spotify")
+        if st.button("Log in to Spotify")
     #Non fare nulla se il bottone non viene cliccato
         else:
           st.button("Log in to Spotify")
