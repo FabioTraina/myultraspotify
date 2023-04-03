@@ -135,15 +135,15 @@ def app_display_welcome():
     uri = st.secrets["SPOTIPY_REDIRECT_URI"]
 
     # set scope and establish connection
-    scopes = (["user-read-private",
-                       "playlist-read-private",
-                       "playlist-modify-private",
-                       "playlist-modify-public",
-                       "user-read-recently-played",
-                       "user-library-read",
-                       "user-top-read",
-                       "user-read-recently-played",
-                       "user-library-read"])
+    scopes = " ".join(["user-read-private",
+                                    "playlist-read-private",
+                                    "playlist-modify-private",
+                                    "playlist-modify-public",
+                                    "user-read-recently-played",
+                                    "user-library-read",
+                                    "user-top-read",
+                                    "user-read-recently-played",
+                                    "user-library-read"])
 
     # create oauth object
     oauth = SpotifyOAuth(scope=scopes,
