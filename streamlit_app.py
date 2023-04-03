@@ -157,6 +157,21 @@ def app_get_token():
     else:
         st.session_state["cached_token"] = token
         
+def app_sign_in():
+    print("app_sign_in")
+    try:
+        sp = sign_in(st.session_state["cached_token"])
+    except Exception as e:
+        st.error("An error occurred during sign-in!")
+        st.write("The error is as follows:")
+        st.write(e)
+    else:
+        st.session_state["signed_in"] = True
+        app_display_welcome()
+        st.success("Sign in success!")
+        
+    return sp
+        
 def app_display_welcome():
     print("app_display_welcome")
     # import secrets from streamlit deployment
