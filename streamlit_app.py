@@ -690,7 +690,7 @@ if selected_track is not None and len(tracks) > 0:
                 
     selected_track_choice = None
     if track_id is not None:
-        image = track['album']['images'][0]['url']
+        #image = track['album']['images'][0]['url']
         page = st.empty()
         canzone = selected_track.split("  by  ")
         titolo = canzone[0]
@@ -706,7 +706,7 @@ if selected_track is not None and len(tracks) > 0:
                     #### 🎤 {artista}
                     💿 {track_album} 
                     """)
-        image = songrecommendations.get_album_mage(track_id)
+        #image = songrecommendations.get_album_mage(track_id)
         #st.image(image)
         track_choices = ['Song Features', 'Similar Songs Recommendation', 'Lyrics']
         selected_track_choice = st.sidebar.selectbox('Please select track choice: ', track_choices)
