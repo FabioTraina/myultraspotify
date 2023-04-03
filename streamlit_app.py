@@ -199,8 +199,6 @@ def app_display_welcome():
                           "clicking the link below."]))
         st.markdown(link_html, unsafe_allow_html=True)
         st.markdown(note_temp)
-        
-st.write(auth_url)
 
 if "signed_in" not in st.session_state:
     st.session_state["signed_in"] = False
