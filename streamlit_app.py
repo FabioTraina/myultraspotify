@@ -85,10 +85,6 @@ st.subheader("I tuoi dati tutto l'anno :musical_note:")
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-client_id = os.environ['SPOTIPY_CLIENT_ID']
-client_secret = os.environ['SPOTIPY_CLIENT_SECRET']
-scope = ['user-library-read','user-top-read','user-read-recently-played','user-library-read']
-
 def get_token(oauth, code):
 
     token = oauth.get_access_token(code, as_dict=False, check_cache=False)
@@ -136,12 +132,9 @@ def app_sign_in():
 def app_display_welcome():
     print("app_display_welcome")
     # import secrets from streamlit deployment
-    #cid = st.secrets["SPOTIPY_CLIENT_ID"]
-    #csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
-    #uri = st.secrets["SPOTIPY_REDIRECT_URI"]
-    cid = os.environ['SPOTIPY_CLIENT_ID']
-    csecret = os.environ['SPOTIPY_CLIENT_SECRET']
-    uri = os.environ["SPOTIPY_REDIRECT_URI"]
+    cid = st.secrets["SPOTIPY_CLIENT_ID"]
+    csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
+    uri = st.secrets["SPOTIPY_REDIRECT_URI"]
 
     # set scope and establish connection
     scopes = " ".join(["user-read-private",
