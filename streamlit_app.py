@@ -1136,54 +1136,60 @@ if selected == 'My Artists':
 #region
 
 if selected == 'My Playlists':
-    
     # Display the user's playlists
     playlists = sp.current_user_playlists()
-
-    # set the number of images to display per row
-    images_per_row = 3
-    q = 0
-
-    # add a selectbox to choose the track order
-    order_by = st.selectbox("Order tracks by:", ["Appearance", "Popularity"])
-
-
-    # iterate over the playlists
+    # Display the user's playlists
     for playlist in playlists['items']:
-        # write the playlist name to the app
-        st.write("Playlist:", playlist['name'])
-        
-        # get a list of the tracks in the playlist, ordered by appearance or popularity
-        if order_by == "Popularity":
+            try:
+                image_playlist = st.image(playlist['images'][0]['url'], width=100)
+            except IndexError:
+                image_playlist = st.image('https://via.placeholder.com/100', width=100)
+            if st.checkbox(playlist['name']):
+                # Get the tracks in the playlist
+                # Add a selectbox to choose the sorting method
+                sort_by = st.selectbox("Sort by", ["Popolarità 🚀", "Titolo 🎧","Energia🏋🏻‍♂️","Data Rilascio 📆"])
 
-            # Sort the tracks by popularity
-            #tracks = sorted(playlist['id'], key=lambda k: k['popularity'], reverse=True)
+                # Get the tracks in the playlist
+                tra = sp.playlist_tracks(playlist['id'])
+                tracks = sp.playlist_tracks(playlist['id'], fields='items(track(name, album(images(url),name, release_date, artists(name)), popularity, preview_url,id))')['items']
+                # Get the audio features for each track
+                features = sp.audio_features([track['track']['id'] for track in tracks])
+                # Combine the track and feature information into a single dictionary
+                for i, feature in enumerate(features):
+                    tracks[i]['track']['valence'] = feature['valence']
+                # Sort the tracks by the selected method
+                if sort_by == "Popolarità 🚀":
+                    tracks = sorted(tracks, key=lambda t: t['track']['popularity'], reverse=True)
+                elif sort_by == "Titolo 🎧":
+                    tracks = sorted(tracks, key=lambda t: t['track']['name'])
+                elif sort_by == "Energia🏋🏻‍♂️":
+                    tracks = sorted(tracks, key=lambda t: t['track']['valence'], reverse=True)
+                elif sort_by == "Data Rilascio 📆":
+                    tracks = sorted(tracks, key=lambda t: t['track']['album']['release_date'], reverse=True)
+                # Display the tracks in 4 images per row
+                num_columns = 50
+                items_per_column = 4
 
-            #tracks = sp.playlist_tracks(playlist['id'], fields='items(track(name,album(images(url))), popularity)', sort_by='popularity')['items']
-            tracks = sp.playlist_tracks(playlist['id'], fields='items(track(name,album(images(url))))')['items']
-        else:
-            tracks = sp.playlist_tracks(playlist['id'], fields='items(track(name,album(images(url))))')['items']
-           
-        # divide the app layout into columns
-        columns = st.columns(images_per_row)
-
-        # iterate over the tracks
-        for i, track in enumerate(tracks):
-            # get the image URL and display the image in the app
-            image_url = track['track']['album']['images'][0]['url']
-            image = Image.open(requests.get(image_url, stream=True).raw)
-            
-            # display the image in the appropriate column
-            with columns[i % images_per_row]:
-                # write the track name to the app
-                if order_by == "Popularity":
-                    st.write(f"{q+1}. {track['track']['name']}")
-                    #st.write(f"Popularity: {track['popularity']}")
-                    #st.write(track['track']['name'], " (popularity:", track['popularity'], ")")
-                else:
-                    st.write(f"{q+1}. {track['track']['name']}")
-                st.image(image, width=200)
-                q = q+1
+                for i in range(num_columns):
+                    col_items = tracks[i*items_per_column:(i+1)*items_per_column]
+                    col = st.columns(items_per_column)
+                    for j, item in enumerate(col_items):
+                        with col[j]:
+                            image = st.image(item['track']['album']['images'][0]['url'], use_column_width=True)
+                            with st.expander("🎵"):
+                                titolo = (item['track']['name'])
+                                pop = (item['track']['popularity'])
+                                data_rilascio = (item['track']['album']['release_date'])
+                                titolo_album = (item['track']['album']['name'])
+                                artista = (item['track']['album']['artists'][0]['name'])
+                                st.audio(item['track']['preview_url'], format='audio/ogg', start_time=0) 
+                                st.markdown(f"""
+                                ###### 🎧 {titolo}
+                                ###### 🎤 {artista}
+                                ###### 💿 {titolo_album}
+                                ###### 📆 {data_rilascio}
+                                ###### 🚀 Popolarità: {pop}
+                        """)
 #endregion
 
 ######################################################################################################
