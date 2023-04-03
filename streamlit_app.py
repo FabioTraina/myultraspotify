@@ -677,7 +677,6 @@ if  selected == 'Song/Track':
     canzone.append(selected_track)
 if selected_track is not None and len(tracks) > 0:
     track_list = tracks['tracks']['items']
-    st.write(track_list)
     track_id = None
     if len(track_list) > 0:
         for track in track_list:
@@ -718,7 +717,7 @@ if selected_track is not None and len(tracks) > 0:
             st.dataframe(df_features)
             polarplot.feature_plot(df_features)
         elif selected_track_choice == 'Similar Songs Recommendation':
-            token = songrecommendations.get_token(cid, csecret)
+            #token = songrecommendations.get_token(cid, csecret)
             similar_song_json=songrecommendations.get_track_recommendations(track_id, token)
             recommendation_list = similar_song_json['tracks']
             recommendation_list_df = pd.DataFrame(recommendation_list)
@@ -728,7 +727,7 @@ if selected_track is not None and len(tracks) > 0:
             #st.write("Reccomandations....")
             songrecommendations.song_recommendation_vis(recommendation_df)
         elif selected_track_choice == 'Lyrics':
-            token = songrecommendations.get_token(client_id, client_secret)
+            #token = songrecommendations.get_token(client_id, client_secret)
             canzone = selected_track.split("  by  ")
             titolo = canzone[0]
             artista = canzone[1]
@@ -827,7 +826,7 @@ if selected_artist is not None and len(artists) > 0:
                     
                     with col4:
                         def similar_song_requested():
-                            token = songrecommendations.get_token(client_id, client_secret)
+                            #token = songrecommendations.get_token(client_id, client_secret)
                             similar_song_json = songrecommendations.get_track_recommendations(track['id'], token)
                             recommendation_list = similar_song_json['tracks']
                             recommendation_list_df = pd.DataFrame(recommendation_list)
