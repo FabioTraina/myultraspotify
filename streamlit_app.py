@@ -677,6 +677,7 @@ if  selected == 'Song/Track':
     canzone.append(selected_track)
 if selected_track is not None and len(tracks) > 0:
     track_list = tracks['tracks']['items']
+    st.write(track_list)
     track_id = None
     if len(track_list) > 0:
         for track in track_list:
@@ -686,7 +687,7 @@ if selected_track is not None and len(tracks) > 0:
                 track_album = track['album']['name']
                 img_album = track['album']['images'][1]['url']
                 #st.write(track_id, track_album, img_album)
-                songrecommendations.save_album_image(img_album, track_id)
+                
     selected_track_choice = None
     if track_id is not None:
         image = songrecommendations.get_album_mage(track_id)
