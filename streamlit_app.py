@@ -184,11 +184,11 @@ def app_display_welcome():
                        "playlist-read-private",
                        "playlist-modify-private",
                        "playlist-modify-public",
-                       "user-read-recently-played,
-                       'user-library-read',
-                       'user-top-read',
-                       'user-read-recently-played',
-                       'user-library-read'"])
+                       "user-read-recently-played",
+                       "user-library-read",
+                       "user-top-read",
+                       "user-read-recently-played",
+                       "user-library-read"])
 
     # create oauth object
     oauth = SpotifyOAuth(scope=scopes,
