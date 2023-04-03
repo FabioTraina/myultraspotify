@@ -82,45 +82,6 @@ def get_track_features(id):
 #Home Page
 st.title("My Spotify Wrapped")
 st.subheader("I tuoi dati tutto l'anno :musical_note:")
-
-######################################################################################################
-#SideBar
-
-with st.sidebar:
-    selected = option_menu('',["Home", 'My Tracks', 'My Artists','My Playlists', 'My Podcasts', 'Analysis','Song/Track','Artist','Album','Community'], 
-        icons=['house', 'bi bi-file-person-fill','bi bi-file-person-fill','bi bi-music-player-fill','bi bi-music-note-list','bi bi-bar-chart-fill','bi bi-vinyl-fill','bi bi-mic-fill','bi bi-disc-fill','bi bi-people-fill'], 
-        menu_icon="house", default_index=0)
-#endregion
-
-######################################################################################################
-
-#HOME 
-#region
-
-if selected == 'Home':
-    col1, col2 = st.columns(2)
-    with col1:
-        if not st.button("Log in to Spotify"):
-    #Non fare nulla se il bottone non viene cliccato
-           pass
-        else:
-            client_id = os.environ['SPOTIPY_CLIENT_ID']
-            client_secret = os.environ['SPOTIPY_CLIENT_SECRET']
-            scope = ['user-library-read','user-top-read','user-read-recently-played','user-library-read']
-            sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
-    with col2:
-        if st.button("Log out to Spotify"):
-        # Non fare nulla se il bottone non viene cliccato
-            os.remove('.cache-your-spotify-username')
-        # aggiungi eventuali altre operazioni di log
-        else:
-            pass
-#endregion
-
-
-
-######################################################################################################
-#region
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -268,6 +229,41 @@ if st.session_state["signed_in"]:
     username = user["id"]
 
 st.write(user)
+######################################################################################################
+#SideBar
+
+with st.sidebar:
+    selected = option_menu('',["Home", 'My Tracks', 'My Artists','My Playlists', 'My Podcasts', 'Analysis','Song/Track','Artist','Album','Community'], 
+        icons=['house', 'bi bi-file-person-fill','bi bi-file-person-fill','bi bi-music-player-fill','bi bi-music-note-list','bi bi-bar-chart-fill','bi bi-vinyl-fill','bi bi-mic-fill','bi bi-disc-fill','bi bi-people-fill'], 
+        menu_icon="house", default_index=0)
+#endregion
+
+######################################################################################################
+
+#HOME 
+#region
+
+if selected == 'Home':
+    col1, col2 = st.columns(2)
+    with col1:
+        st.button("Log in to Spotify")
+    #Non fare nulla se il bottone non viene cliccato
+        else:
+          st.button("Log in to Spotify")
+    with col2:
+        if st.button("Log out to Spotify"):
+        # Non fare nulla se il bottone non viene cliccato
+            os.remove('.cache-your-spotify-username')
+        # aggiungi eventuali altre operazioni di log
+        else:
+            pass
+#endregion
+
+
+
+######################################################################################################
+#region
+
 #endregion
 ######################################################################################################
 
