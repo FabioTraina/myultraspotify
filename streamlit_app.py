@@ -222,7 +222,7 @@ if st.session_state["signed_in"]:
     name = user["display_name"]
     username = user["id"]
 
-test = sp.current_user_top_tracks(limit=32, offset=0, time_range=long_term)
+test = sp.current_user_top_tracks(limit=32, offset=0, time_range='long_term')
 st.write(test)
 st.write(username)
 st.write(sp)
