@@ -94,8 +94,6 @@ def get_token(oauth, code):
     # return the token
     return token
 
-
-
 def sign_in(token):
     sp = spotipy.Spotify(auth=token)
     return sp
@@ -224,7 +222,8 @@ if st.session_state["signed_in"]:
     name = user["display_name"]
     username = user["id"]
 
-st.write(user)
+st.write(username)
+st.wirte(sp)
 ######################################################################################################
 #SideBar
 
