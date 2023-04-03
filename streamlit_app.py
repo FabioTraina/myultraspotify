@@ -223,7 +223,7 @@ if st.session_state["signed_in"]:
     username = user["id"]
 
 st.write(username)
-st.wirte(sp)
+st.write(sp)
 ######################################################################################################
 #SideBar
 
