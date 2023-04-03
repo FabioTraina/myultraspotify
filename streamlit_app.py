@@ -717,7 +717,7 @@ if selected_track is not None and len(tracks) > 0:
             st.dataframe(df_features)
             polarplot.feature_plot(df_features)
         elif selected_track_choice == 'Similar Songs Recommendation':
-            #token = songrecommendations.get_token(cid, csecret)
+            token = songrecommendations.get_token(cid = st.secrets["SPOTIPY_CLIENT_ID"],csecret = st.secrets["SPOTIPY_CLIENT_SECRET"])
             similar_song_json=songrecommendations.get_track_recommendations(track_id, token)
             recommendation_list = similar_song_json['tracks']
             recommendation_list_df = pd.DataFrame(recommendation_list)
