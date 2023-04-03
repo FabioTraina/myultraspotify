@@ -184,7 +184,11 @@ def app_display_welcome():
                        "playlist-read-private",
                        "playlist-modify-private",
                        "playlist-modify-public",
-                       "user-read-recently-played"])
+                       "user-read-recently-played,
+                       'user-library-read',
+                       'user-top-read',
+                       'user-read-recently-played',
+                       'user-library-read'"])
 
     # create oauth object
     oauth = SpotifyOAuth(scope=scopes,
@@ -219,8 +223,6 @@ def app_display_welcome():
     new tab. This has already been addressed in a development release, so it should
     be implemented in Streamlit Cloud soon!_
     """
-
-    st.title("Spotify Playlist Preserver")
 
     if not st.session_state["signed_in"]:
         st.markdown(welcome_msg)
