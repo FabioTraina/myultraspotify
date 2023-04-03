@@ -244,19 +244,7 @@ with st.sidebar:
 #region
 
 if selected == 'Home':
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Log in to Spotify")
-    #Non fare nulla se il bottone non viene cliccato
-        else:
-          st.button("Log in to Spotify")
-    with col2:
-        if st.button("Log out to Spotify"):
-        # Non fare nulla se il bottone non viene cliccato
-            os.remove('.cache-your-spotify-username')
-        # aggiungi eventuali altre operazioni di log
-        else:
-            pass
+   st.write("ciao")
 #endregion
 
 
