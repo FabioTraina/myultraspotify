@@ -142,7 +142,21 @@ def get_token(oauth, code):
 def sign_in(token):
     sp = spotipy.Spotify(auth=token)
     return sp
-
+  
+def app_get_token():
+    print("app_get_token")
+    app_display_welcome()
+    try:
+        print("OAUTH: {}".format(st.session_state["oauth"]))
+        token = get_token(st.session_state["oauth"], st.session_state["code"])
+        #token = "AQC1FR9WR3jJMNxkJbhWByGnT6FBMhXdfqbpjrOR5-W0tGSoih_dtYQgJxF-MHP1gIkeQY2Hqw6r5KNgJ1mMkFAYuKd6U0K1TNSwdRneyVxQLUMlWhm91BdMV1xHVqckIioCpD9J292Hxf6LY-KXnfQcE2FWRFsV6hONAsFOoitxiEEdk6CcutSaaLxFf0S8-rKNlEOCqnZ39msbWCL0glutyLvUGtJknvr5WFg1he9uov5ybwrW7W0UgdxZvRpQILTcFPgcxBXYPyZXVyWVNuW2Yk40i3yLPZxPmd2v7bwwX2WMWn0uTPVSzg"
+    except Exception as e:
+        st.error("An error occurred during token retrieval!")
+        st.write("The error is as follows:")
+        st.write(e)
+    else:
+        st.session_state["cached_token"] = token
+        
 def app_display_welcome():
     print("app_display_welcome")
     # import secrets from streamlit deployment
