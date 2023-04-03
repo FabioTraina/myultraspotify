@@ -124,27 +124,92 @@ if selected == 'Home':
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-
-
-# Everything is accessible via the st.secrets dict:
-
-st.write("DB username:", st.secrets["SPOTIPY_CLIENT_ID"])
-st.write("DB password:", st.secrets["SPOTIPY_CLIENT_SECRET"])
-st.write("DB URI:", st.secrets["SPOTIPY_REDIRECT_URI"])
-
-# And the root-level secrets are also accessible as environment variables:
-
-import os
-
-st.write(
-    "Has environment variables been set:",
-    os.environ["SPOTIPY_CLIENT_ID"] == st.secrets["SPOTIPY_CLIENT_ID"],
-)
-
 client_id = os.environ['SPOTIPY_CLIENT_ID']
 client_secret = os.environ['SPOTIPY_CLIENT_SECRET']
 scope = ['user-library-read','user-top-read','user-read-recently-played','user-library-read']
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+
+def get_token(oauth, code):
+
+    token = oauth.get_access_token(code, as_dict=False, check_cache=False)
+    # remove cached token saved in directory
+    os.remove(".cache")
+
+    # return the token
+    return token
+
+
+
+def sign_in(token):
+    sp = spotipy.Spotify(auth=token)
+    return sp
+
+cid = st.secrets["SPOTIPY_CLIENT_ID"]
+csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
+uri = st.secrets["SPOTIPY_REDIRECT_URI"]
+
+# set scope and establish connection
+scopes = " ".join(["user-read-private",
+                    "playlist-read-private",
+                    "playlist-modify-private",
+                    "playlist-modify-public",
+                    "user-read-recently-played"])
+
+# create oauth object
+oauth = SpotifyOAuth(scope=scopes,
+                        redirect_uri=uri,
+                        client_id=cid,
+                        client_secret=csecret)
+# store oauth in session
+st.session_state["oauth"] = oauth
+
+# retrieve auth url
+auth_url = oauth.get_authorize_url()
+
+# this SHOULD open the link in the same tab when Streamlit Cloud is updated
+# via the "_self" target
+link_html = " <a target=\"_self\" href=\"{url}\" >{msg}</a> ".format(
+    url=auth_url,
+    msg="Click me to authenticate!"
+)
+st.write(auth_url)
+
+if "signed_in" not in st.session_state:
+    st.session_state["signed_in"] = False
+if "cached_token" not in st.session_state:
+    st.session_state["cached_token"] = ""
+if "code" not in st.session_state:
+    st.session_state["code"] = ""
+if "oauth" not in st.session_state:
+    st.session_state["oauth"] = None
+
+# %% authenticate with response stored in url
+
+# get current url (stored as dict)
+url_params = st.experimental_get_query_params()
+print("UrlParams: {}".format(url_params))
+# attempt sign in with cached token
+if st.session_state["cached_token"] != "":
+    sp = app_sign_in()
+# if no token, but code in url, get code, parse token, and sign in
+elif "code" in url_params:
+    # all params stored as lists, see doc for explanation
+    st.session_state["code"] = url_params["code"][0]
+    app_get_token()
+    sp = app_sign_in()
+# otherwise, prompt for redirect
+else:
+    app_display_welcome()
+    
+# %% after auth, get user info
+
+# only display the following after login
+### is there another way to do this? clunky to have everything in an if:
+if st.session_state["signed_in"]:
+    user = sp.current_user()
+    name = user["display_name"]
+    username = user["id"]
+
+
 results = sp.current_user_saved_tracks()
 for idx, item in enumerate(results['items']):
     track = item['track']
