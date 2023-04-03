@@ -685,12 +685,12 @@ if selected_track is not None and len(tracks) > 0:
             if str_temp == selected_track:
                 track_id = track['id']
                 track_album = track['album']['name']
-                img_album = track['album']['images'][1]['url']
+                img_album = track['album']['images'][0]['url']
                 #st.write(track_id, track_album, img_album)
                 
     selected_track_choice = None
     if track_id is not None:
-        image = songrecommendations.get_album_mage(track_id)
+        image = track['album']['images'][0]['url']
         page = st.empty()
         canzone = selected_track.split("  by  ")
         titolo = canzone[0]
