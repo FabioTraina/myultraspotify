@@ -698,7 +698,8 @@ if selected_track is not None and len(tracks) > 0:
         with page.container():
                 img, title = st.columns([2, 4])
                 with img:
-                    st.image(image)
+                    #st.image(image)
+                  st.write("")
 
                 with title:
                     st.markdown(f"""
