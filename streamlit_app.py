@@ -267,11 +267,7 @@ if st.session_state["signed_in"]:
     name = user["display_name"]
     username = user["id"]
 
-
-results = sp.current_user_saved_tracks()
-for idx, item in enumerate(results['items']):
-    track = item['track']
-    print(idx, track['artists'][0]['name'], " – ", track['name'])
+st.write(user)
 #endregion
 ######################################################################################################
 
