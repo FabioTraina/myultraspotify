@@ -135,7 +135,7 @@ def app_display_welcome():
     uri = st.secrets["SPOTIPY_REDIRECT_URI"]
 
     # set scope and establish connection
-    scopes = " ".join(["user-read-private",
+    scopes = (["user-read-private",
                        "playlist-read-private",
                        "playlist-modify-private",
                        "playlist-modify-public",
