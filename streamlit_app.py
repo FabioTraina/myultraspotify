@@ -689,23 +689,17 @@ if selected_track is not None and len(tracks) > 0:
                 
     selected_track_choice = None
     if track_id is not None:
-        #image = track['album']['images'][0]['url']
+        tt = sp.track(track_id)
+        img_album = tt['album']['images'][1]['url']
         page = st.empty()
         canzone = selected_track.split("  by  ")
+        st.write(selected_track)
         titolo = canzone[0]
         artista = canzone[1]
         with page.container():
                 img, title = st.columns([2, 4])
                 with img:
-                    #st.image(image)
-                  st.write("")
-
-                with title:
-                    st.markdown(f"""
-                    #### 🎧 {titolo}
-                    #### 🎤 {artista}
-                    💿 {track_album} 
-                    """)
+                    st.image(img_album)
         #image = songrecommendations.get_album_mage(track_id)
         #st.image(image)
         track_choices = ['Song Features', 'Similar Songs Recommendation', 'Lyrics']
@@ -717,7 +711,9 @@ if selected_track is not None and len(tracks) > 0:
             st.dataframe(df_features)
             polarplot.feature_plot(df_features)
         elif selected_track_choice == 'Similar Songs Recommendation':
-            token = songrecommendations.get_token(cid = st.secrets["SPOTIPY_CLIENT_ID"],csecret = st.secrets["SPOTIPY_CLIENT_SECRET"])
+            cid = st.secrets["SPOTIPY_CLIENT_ID"]
+            csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
+            token = songrecommendations.get_token(cid, csecret)
             similar_song_json=songrecommendations.get_track_recommendations(track_id, token)
             recommendation_list = similar_song_json['tracks']
             recommendation_list_df = pd.DataFrame(recommendation_list)
