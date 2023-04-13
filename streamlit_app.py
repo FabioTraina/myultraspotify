@@ -2,10 +2,11 @@
 #region
 import spotipy
 import spotipy.util as util
+import time
 import pandas as pd
 import streamlit as st
 import numpy as np
-from spotipy.oauth2 import SpotifyOAuth
+#from spotipy.oauth2 import SpotifyClientCredentials
 
 import songrecommendations
 import polarplot
@@ -22,6 +23,7 @@ import os
 import sys
 import signal
 import threading
+import webbrowser
 
 from PIL import Image
 import requests
@@ -36,8 +38,21 @@ from datetime import datetime
 import funzioni
 
 import altair as alt
-import sys
-import spotipy.util as util
+
+import base64
+
+from spotipy.oauth2 import SpotifyOAuth
+
+import matplotlib.offsetbox as offsetbox
+
+from collections import Counter
+
+import ast
+
+from numpy import dot
+from numpy.linalg import norm
+
+import plotly.graph_objs as go
 #endregion
 
 
@@ -50,9 +65,25 @@ def local_css(file_name):
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 local_css("test.css")
-#TOKEN SPOTIFY 
 
-    
+
+######################################################################################################
+
+from spotipy.oauth2 import SpotifyOAuth
+
+import spotipy
+#region
+#client_id = '5e7881c6e05440c0895cfa3c2a52fe37'
+#client_secret = '50d6a378818745ff846018655d9aef4c'
+#redirect_uri = 'http://localhost:8008/callback'
+#username = 'your-spotify-username'
+#scope = ['user-top-read','user-read-recently-played','user-library-read']
+# Ottieni il token di accesso dell'utente
+#token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
+#sp = spotipy.Spotify(auth=token)
+
+#endregion
+
 ######################################################################################################
 
 #CARATTERISTICHE CANZONI 
@@ -82,172 +113,73 @@ def get_track_features(id):
 #Home Page
 st.title("My Spotify Wrapped")
 st.subheader("I tuoi dati tutto l'anno :musical_note:")
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 
-def get_token(oauth, code):
-
-    token = oauth.get_access_token(code, as_dict=False, check_cache=False)
-    # remove cached token saved in directory
-    os.remove(".cache")
-
-    # return the token
-    return token
-
-def sign_in(token):
-    sp = spotipy.Spotify(auth=token)
-    return sp
-  
-def app_get_token():
-    print("app_get_token")
-    app_display_welcome()
-    try:
-        print("OAUTH: {}".format(st.session_state["oauth"]))
-        token = get_token(st.session_state["oauth"], st.session_state["code"])
-        #token = "AQC1FR9WR3jJMNxkJbhWByGnT6FBMhXdfqbpjrOR5-W0tGSoih_dtYQgJxF-MHP1gIkeQY2Hqw6r5KNgJ1mMkFAYuKd6U0K1TNSwdRneyVxQLUMlWhm91BdMV1xHVqckIioCpD9J292Hxf6LY-KXnfQcE2FWRFsV6hONAsFOoitxiEEdk6CcutSaaLxFf0S8-rKNlEOCqnZ39msbWCL0glutyLvUGtJknvr5WFg1he9uov5ybwrW7W0UgdxZvRpQILTcFPgcxBXYPyZXVyWVNuW2Yk40i3yLPZxPmd2v7bwwX2WMWn0uTPVSzg"
-    except Exception as e:
-        st.error("An error occurred during token retrieval!")
-        st.write("The error is as follows:")
-        st.write(e)
-    else:
-        st.session_state["cached_token"] = token
-        
-def app_sign_in():
-    print("app_sign_in")
-    try:
-        sp = sign_in(st.session_state["cached_token"])
-    except Exception as e:
-        st.error("An error occurred during sign-in!")
-        st.write("The error is as follows:")
-        st.write(e)
-    else:
-        st.session_state["signed_in"] = True
-        app_display_welcome()
-        st.success("Sign in success!")
-        
-    return sp
-        
-def app_display_welcome():
-    print("app_display_welcome")
-    # import secrets from streamlit deployment
-    cid = st.secrets["SPOTIPY_CLIENT_ID"]
-    csecret = st.secrets["SPOTIPY_CLIENT_SECRET"]
-    uri = st.secrets["SPOTIPY_REDIRECT_URI"]
-
-    # set scope and establish connection
-    scopes = " ".join(["user-read-private",
-                                    "playlist-read-private",
-                                    "playlist-modify-private",
-                                    "playlist-modify-public",
-                                    "user-read-recently-played",
-                                    "user-library-read",
-                                    "user-top-read",
-                                    "user-read-recently-played",
-                                    "user-library-read"])
-
-    # create oauth object
-    oauth = SpotifyOAuth(scope=scopes,
-                         redirect_uri=uri,
-                         client_id=cid,
-                         client_secret=csecret)
-    # store oauth in session
-    st.session_state["oauth"] = oauth
-
-    # retrieve auth url
-    auth_url = oauth.get_authorize_url()
-    
-    # this SHOULD open the link in the same tab when Streamlit Cloud is updated
-    # via the "_self" target
-    link_html = " <a target=\"_self\" href=\"{url}\" >{msg}</a> ".format(
-        url=auth_url,
-        msg="Click me to authenticate!"
-    )
-    
-    # define welcome
-    welcome_msg = """
-    Welcome! :wave: This app uses the Spotify API to interact with general 
-    music info and your playlists! In order to view and modify information 
-    associated with your account, you must log in. You only need to do this 
-    once.
-    """
-    
-    # define temporary note
-    note_temp = """
-    _Note: Unfortunately, the current version of Streamlit will not allow for
-    staying on the same page, so the authorization and redirection will open in a 
-    new tab. This has already been addressed in a development release, so it should
-    be implemented in Streamlit Cloud soon!_
-    """
-
-    if not st.session_state["signed_in"]:
-        st.markdown(welcome_msg)
-        st.write(" ".join(["No tokens found for this session. Please log in by",
-                          "clicking the link below."]))
-        st.markdown(link_html, unsafe_allow_html=True)
-        st.markdown(note_temp)
-
-if "signed_in" not in st.session_state:
-    st.session_state["signed_in"] = False
-if "cached_token" not in st.session_state:
-    st.session_state["cached_token"] = ""
-if "code" not in st.session_state:
-    st.session_state["code"] = ""
-if "oauth" not in st.session_state:
-    st.session_state["oauth"] = None
-
-# %% authenticate with response stored in url
-
-# get current url (stored as dict)
-url_params = st.experimental_get_query_params()
-print("UrlParams: {}".format(url_params))
-# attempt sign in with cached token
-if st.session_state["cached_token"] != "":
-    sp = app_sign_in()
-# if no token, but code in url, get code, parse token, and sign in
-elif "code" in url_params:
-    # all params stored as lists, see doc for explanation
-    st.session_state["code"] = url_params["code"][0]
-    app_get_token()
-    sp = app_sign_in()
-# otherwise, prompt for redirect
-else:
-    app_display_welcome()
-    
-# %% after auth, get user info
-
-# only display the following after login
-### is there another way to do this? clunky to have everything in an if:
-if st.session_state["signed_in"]:
-    user = sp.current_user()
-    name = user["display_name"]
-    username = user["id"]
-
-st.write(username)
-st.write(sp)
 ######################################################################################################
 #SideBar
 
 with st.sidebar:
-    selected = option_menu('',["Home", 'My Tracks', 'My Artists','My Playlists', 'My Podcasts', 'Analysis','Song/Track','Artist','Album','Community'], 
-        icons=['house', 'bi bi-file-person-fill','bi bi-file-person-fill','bi bi-music-player-fill','bi bi-music-note-list','bi bi-bar-chart-fill','bi bi-vinyl-fill','bi bi-mic-fill','bi bi-disc-fill','bi bi-people-fill'], 
+    selected = option_menu('',["Home", 'My Tracks', 'My Artists','My Playlists', 'My Podcasts','Song/Track','Artist','Album','Community'], 
+        icons=['house', 'bi bi-file-person-fill','bi bi-file-person-fill','bi bi-music-player-fill','bi bi-music-note-list','bi bi-vinyl-fill','bi bi-mic-fill','bi bi-disc-fill','bi bi-people-fill'], 
         menu_icon="house", default_index=0)
 #endregion
 
 ######################################################################################################
-
 #HOME 
 #region
-
 if selected == 'Home':
-   st.write("ciao")
-#endregion
+    if selected == 'Home':
+        col1, col2 = st.columns(2)
+        with col1:
+            if not st.button("Log in to Spotify"):
+        #Non fare nulla se il bottone non viene cliccato
+                pass
+            else:
+                client_id = os.environ['SPOTIPY_CLIENT_ID']
+                client_secret = os.environ['SPOTIPY_CLIENT_SECRET']
+                scope = ['user-library-read','user-top-read','user-read-recently-played','user-library-read']
+                sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+        with col2:
+            if st.button("Log out to Spotify"):
+            # Non fare nulla se il bottone non viene cliccato
+                os.remove('.cache')
+            # aggiungi eventuali altre operazioni di log
+            else:
+                pass
+    #endregion
 
 
 
 ######################################################################################################
 #region
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+
+
+# Everything is accessible via the st.secrets dict:
+
+#st.write("DB username:", st.secrets["SPOTIPY_CLIENT_ID"])
+#st.write("DB password:", st.secrets["SPOTIPY_CLIENT_SECRET"])
+#st.write("DB URI:", st.secrets["SPOTIPY_REDIRECT_URI"])
+
+# And the root-level secrets are also accessible as environment variables:
+
+import os
+
+#st.write(
+    #"Has environment variables been set:",
+    #os.environ["SPOTIPY_CLIENT_ID"] == st.secrets["SPOTIPY_CLIENT_ID"],)
+
+client_id = os.environ['SPOTIPY_CLIENT_ID']
+client_secret = os.environ['SPOTIPY_CLIENT_SECRET']
+scope = ['user-library-read','user-top-read','user-read-recently-played','user-library-read']
+sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 #endregion
+#TOKEN SPOTIFY 
+# Ottieni il token di accesso dell'utente
+#token = util.prompt_for_user_token(username, scope, client_id, client_secret, redirect_uri)
+#sp = spotipy.Spotify(auth=token)
 ######################################################################################################
 
 #MY TRACKS 
@@ -344,8 +276,9 @@ if selected == 'My Tracks':
                 total_a += a
             valori = [total_a, 32-total_a]
             etichette = ['felice', 'triste']
+            colori = ['#ff9b54','#669bbc']
             fig1, ax1 = plt.subplots()
-            ax1.pie(valori, labels=etichette, autopct='%1.1f%%',
+            ax1.pie(valori, labels=etichette, colors=colori,autopct='%1.1f%%',
                     shadow=True, startangle=90)
             ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
@@ -421,8 +354,9 @@ if selected == 'My Tracks':
             total_a += a
         valori = [total_a, 32-total_a]
         etichette = ['felice', 'triste']
+        colori = ['#ff9b54','#669bbc']
         fig1, ax1 = plt.subplots()
-        ax1.pie(valori, labels=etichette, autopct='%1.1f%%',
+        ax1.pie(valori, labels=etichette, colors=colori, autopct='%1.1f%%',
                 shadow=True, startangle=90)
         ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
@@ -495,147 +429,19 @@ if selected == 'My Tracks':
             a = track_features[0]['valence']
             total_a += a
         valori = [total_a, 32-total_a]
-        etichette = ['felice', 'triste']
+        etichette = ['felice','triste']
+        colori = ['#ff9b54','#669bbc']
         fig1, ax1 = plt.subplots()
-        ax1.pie(valori, labels=etichette, autopct='%1.1f%%',
-                shadow=True, startangle=90)
+        ax1.pie(valori, labels=etichette,colors = colori, autopct='%1.1f%%',
+                shadow=False, startangle=90)
         ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-
         st.pyplot(fig1)
 #endregion
 
 ######################################################################################################
 
 #ANALYSIS 
-#region
-if selected == 'Analysis':
-    user_id = sp.current_user()["id"]
-    recently_played = sp.current_user_recently_played(limit=50)['items']
-    song_names = []
-    artists = []
-    artists_id = [] 
-    albums = []
-    times = []
-    durations_ms = []
-    track_ids = []
-    genere = []
-    album_image = []
-    for track in recently_played:
-        song = track['track']['name']
-        artist = track['track']['artists'][0]['name']
-        artist_id = track['track']['artists'][0]['id']
-        album = track['track']['album']['name']
-        album_im = track['track']['album']['images'][1]['url']
-        played_at = track['played_at']
-        duration = track['track']['duration_ms']
-        id = track['track']['id']
-        song_names.append(song)
-        artists.append(artist)
-        artists_id.append(artist_id)
-        albums.append(album)
-        played_at_dt = funzioni.str_to_datetime(played_at)
-        times.append(played_at_dt)
-        durations_ms.append(duration)
-        track_ids.append(id)
-        album_image.append(album_im)
-    # Reverse The Lists So The Data Is Aligned From Oldest Played Songs To Newest Played Songs
-    song_names.reverse()
-    artists.reverse()
-    artists_id.reverse()
-    albums.reverse()
-    times.reverse()
-    durations_ms.reverse()
-    track_ids.reverse()
-    album_image.reverse()
 
-
-    #result = sp.search("Capri sun")
-    #track = result['tracks']['items'][0]
-
-    #artist = sp.artist(track["artists"][0]["external_urls"]["spotify"])
-    #st.write("artist genres:", artist["genres"])
-
-    #album = sp.album(track["album"]["external_urls"]["spotify"])
-    #st.write("album genres:", album["genres"])
-    #st.write("album release-date:", album["release_date"])
-
-    songs_data_dict = {
-            'song_names': song_names,
-            'artists': artists,
-            'artists_id':artists_id,
-            'albums': albums,
-            'time_played': times,
-            'duration_ms': durations_ms,
-            'track_ids': track_ids,
-            'albums_image': album_image,
-            'id_name':sp.current_user()["id"]
-
-        }
-
-
-    # Create an empty list to store the genres
-    genres = []
-
-    # Loop through the list of artists in the songs_data_dict
-    for artist in songs_data_dict['artists']:
-        # Search for the artist on Spotify
-        result = sp.search(artist, type='artist')
-        
-        # Get the first artist in the search results
-        first_artist = result['artists']['items'][0]
-        
-        # Get the genres of the first artist
-        artist_genres = first_artist['genres']
-        
-        # Add the genres to the list of genres
-        genres.append(artist_genres)
-
-    test1 = pd.DataFrame(songs_data_dict)
-    test1 = test1.assign(genres=genres)
-    with open(r"/Users/fabiotraina/Desktop/Project Work😱/SpotifyWrapped/my_data.csv", mode = 'a') as f:
-        test1.to_csv(f, header=f.tell()==0, index=False)
-    st.write(test1)
-
-    weekly_tracks = create_track_list(songs_data_dict)
-    num_songs_played = len(weekly_tracks)
-    calc_most_freq_song_result = calc_most_freq_played_song(weekly_tracks)
-    most_freq_played_song = calc_most_freq_song_result[0]
-    max_freq = calc_most_freq_song_result[1]
-    most_freq_played_album = calc_most_freq_played_album(weekly_tracks)
-    most_freq_played_artist = calc_most_freq_played_artist(weekly_tracks)
-    total_time_played = 0
-    for duration in songs_data_dict['duration_ms']:
-        total_time_played += duration
-    total_time_played_mins = round(total_time_played / 60000)
-    #st.write(weekly_tracks)
-    st.write("Numero di canzoni ascoltate: ", num_songs_played)
-    st.write("Album più ascoltato: ", most_freq_played_album[0],"-",most_freq_played_album[1])
-    st.write("Canzone più ascoltata: ", most_freq_played_song[0],"-",most_freq_played_song[2], "/", max_freq,"times")
-    st.write("Artista più ascoltato: ", most_freq_played_artist[1])
-    st.write("Minuti di ascolto totali: ", total_time_played_mins,"mins")
-    
-    #grafico artista più ascoltato
-    test1['count'] = test1.groupby('artists')['artists'].transform('count')
-    st.line_chart(test1, x="artists", y="count")
-    
-    #grafico canzone più ascoltata
-    test1['count'] = test1.groupby('song_names')['song_names'].transform('count')
-    st.line_chart(test1, x="song_names", y="count")
-    
-    #grafico album più ascoltato
-    test1['count'] = test1.groupby('albums')['albums'].transform('count')
-    st.line_chart(test1, x="albums", y="count")
-    
-    test1['count'] = test1.groupby('song_names')['time_played'].transform('count')
-    st.line_chart(test1, x="song_names", y="time_played")
-    
-    test1['count'] = test1.groupby('artists')['time_played'].transform('count')
-    st.line_chart(test1, x="artists", y="time_played")
-    
-    test1['count'] = test1.groupby('albums')['time_played'].transform('count')
-    st.line_chart(test1, x="albums", y="time_played")
-    
-#endregion
 
 ######################################################################################################
 
@@ -684,25 +490,32 @@ if selected_track is not None and len(tracks) > 0:
             if str_temp == selected_track:
                 track_id = track['id']
                 track_album = track['album']['name']
-                img_album = track['album']['images'][0]['url']
+                img_album = track['album']['images'][1]['url']
                 #st.write(track_id, track_album, img_album)
-                
+                #songrecommendations.save_album_image(img_album, track_id)
     selected_track_choice = None
     if track_id is not None:
         tt = sp.track(track_id)
         img_album = tt['album']['images'][1]['url']
         page = st.empty()
         canzone = selected_track.split("  by  ")
-        st.write(selected_track)
+        #st.write(selected_track)
         titolo = canzone[0]
         artista = canzone[1]
         with page.container():
                 img, title = st.columns([2, 4])
                 with img:
                     st.image(img_album)
+
+                with title:
+                    st.markdown(f"""
+                    #### 🎧 {titolo}
+                    #### 🎤 {artista}
+                    💿 {track_album} 
+                    """)
         #image = songrecommendations.get_album_mage(track_id)
         #st.image(image)
-        track_choices = ['Song Features', 'Similar Songs Recommendation', 'Lyrics']
+        track_choices = ['Song Features', 'Similar Songs Recommendation']
         selected_track_choice = st.sidebar.selectbox('Please select track choice: ', track_choices)
         if selected_track_choice == 'Song Features':
             track_features = sp.audio_features(track_id)
@@ -722,23 +535,25 @@ if selected_track is not None and len(tracks) > 0:
             st.dataframe(recommendation_df)
             #st.write("Reccomandations....")
             songrecommendations.song_recommendation_vis(recommendation_df)
-        elif selected_track_choice == 'Lyrics':
+        #elif selected_track_choice == 'Lyrics':
             #token = songrecommendations.get_token(client_id, client_secret)
-            canzone = selected_track.split("  by  ")
-            titolo = canzone[0]
-            artista = canzone[1]
-            song = genius.search_song(title=titolo, artist=artista)
-            try:
-                lyrics = song.lyrics
-                lyrics = lyrics.split("Embed")[0]
-                url = song.url
-                st.write()
-                st.write(lyrics)
-                st.write(url)
-            except:
-                st.write()
-                st.write(">> lyrics were not found")
-                st.write()
+            #canzone = selected_track.split("  by  ")
+            #titolo = canzone[0]
+            #artista = canzone[1]
+            #song = genius.search_song("Capri Sun")
+            #st.write(song)
+            #song = genius.search_song(title=titolo, artist=artista)
+            #try:
+                #lyrics = song.lyrics
+                #lyrics = lyrics.split("Embed")[0]
+                #url = song.url
+                #st.write()
+                #st.write(lyrics)
+                #st.write(url)
+            #except:
+                #st.write()
+                #st.write(">> lyrics were not found")
+                #st.write()
     else:
         st.write("Please select a track from the list")
 #endregion        
@@ -788,11 +603,16 @@ if selected_artist is not None and len(artists) > 0:
             artist_uri = 'spotify:artist:' + artist_id
             album_result = sp.artist_albums(artist_uri, album_type='album')
             all_albums = album_result['items']
-            col1, col2, col3 = st.columns((6,4,2))
+            table_data = []
             for album in all_albums:
-                col1.write(album['name'])
-                col2.write(album['release_date'])
-                col3.write(album['total_tracks'])
+                album_data = {
+                    'Album Name': album['name'],
+                    'Release Date': album['release_date'],
+                    'Total Tracks': album['total_tracks']
+                }
+                table_data.append(album_data)
+
+            st.table(table_data)
         elif selected_artist_choice == 'Top Songs':
             artist_uri = 'spotify:artist:' + artist_id
             top_songs_result = sp.artist_top_tracks(artist_uri)
@@ -802,7 +622,8 @@ if selected_artist is not None and len(artists) > 0:
                     col11, col12 = st.columns((10,2))
                     col21, col22 = st.columns((11,1))
                     col31, col32 = st.columns((11,1))
-                    col1.write(track['id'])
+                    album_im = track['album']['images'][0]['url']
+                    col1.image(album_im,width=200)
                     col2.write(track['name'])
                     if track['preview_url'] is not None:
                         col11.write(track['preview_url'])
@@ -822,7 +643,7 @@ if selected_artist is not None and len(artists) > 0:
                     
                     with col4:
                         def similar_song_requested():
-                            #token = songrecommendations.get_token(client_id, client_secret)
+                            token = songrecommendations.get_token(cid, csecret)
                             similar_song_json = songrecommendations.get_track_recommendations(track['id'], token)
                             recommendation_list = similar_song_json['tracks']
                             recommendation_list_df = pd.DataFrame(recommendation_list)
@@ -876,23 +697,26 @@ if selected_album is not None and len(albums) > 0:
         st.write("Collecting all the tracks for the album: " + album_name)
         album_tracks = sp.album_tracks(album_id)
         df_album_tracks = pd.DataFrame(album_tracks['items'])
-        #st.dataframe(df_album_tracks)
         df_tracks_min =df_album_tracks.loc[:,
-                        ['id', 'name', 'duration_ms', 'explicit', 'preview_url']]
+                        ['id', 'name', 'duration_ms', 'explicit', 'preview_url', 'track_number']]
+        #st.table(df_tracks_min)
         #st.dataframe(df_tracks_min)
         
         for idx in df_tracks_min.index:
-            with st.container():
-                col1, col2, col3, col4 = st.columns((4,4,1,1))
-                col11, col12 = st.columns((8,2))
-                col1.write(df_tracks_min['id'][idx])
-                col2.write(df_tracks_min['name'][idx])
-                col3.write(df_tracks_min['duration_ms'][idx])
-                col4.write(df_tracks_min['explicit'][idx])
-                if df_tracks_min['preview_url'][idx] is not None:
-                    col11.write(df_tracks_min['preview_url'][idx])
-                    with col12:
-                        st.audio(df_tracks_min['preview_url'][idx], format="audio/mp3")
+            page = st.empty()
+            with page.container():
+                nsong, name_col, duration_col, preview_col = st.columns([1, 4, 2, 3])
+                with nsong:
+                    st.markdown(f"##### {df_tracks_min['track_number'][idx]}")
+                with name_col:
+                    st.markdown(f"##### 🎧 {df_tracks_min['name'][idx]}")
+                with duration_col:
+                    duration_sec = df_tracks_min['duration_ms'][idx] / 1000
+                    duration_min = duration_sec / 60
+                    st.markdown(f"##### ⏳ {format(duration_min, '.2f')} min")
+                with preview_col:
+                    if df_tracks_min['preview_url'][idx] is not None:
+                        st.audio(df_tracks_min['preview_url'][idx], format='audio/mp3')
 #endregion
 
 ###################################################################################################### 
@@ -1137,10 +961,7 @@ if selected == 'My Playlists':
     playlists = sp.current_user_playlists()
     # Display the user's playlists
     for playlist in playlists['items']:
-            try:
-                image_playlist = st.image(playlist['images'][0]['url'], width=100)
-            except IndexError:
-                image_playlist = st.image('https://via.placeholder.com/100', width=100)
+            image_playlist = st.image(playlist['images'][0]['url'],width=100)
             if st.checkbox(playlist['name']):
                 # Get the tracks in the playlist
                 # Add a selectbox to choose the sorting method
@@ -1151,6 +972,7 @@ if selected == 'My Playlists':
                 tracks = sp.playlist_tracks(playlist['id'], fields='items(track(name, album(images(url),name, release_date, artists(name)), popularity, preview_url,id))')['items']
                 # Get the audio features for each track
                 features = sp.audio_features([track['track']['id'] for track in tracks])
+
                 # Combine the track and feature information into a single dictionary
                 for i, feature in enumerate(features):
                     tracks[i]['track']['valence'] = feature['valence']
@@ -1187,6 +1009,7 @@ if selected == 'My Playlists':
                                 ###### 📆 {data_rilascio}
                                 ###### 🚀 Popolarità: {pop}
                         """)
+
 #endregion
 
 ######################################################################################################
@@ -1254,7 +1077,8 @@ if selected == 'My Podcasts':
 #region
 if selected == 'Community':
     user_id = sp.current_user()["id"]
-    st.write(user_id)
+    name = sp.current_user()['display_name']
+    st.write(name)
 
     recently_played = sp.current_user_recently_played(limit=50)['items']
     song_names = []
@@ -1340,9 +1164,11 @@ if selected == 'Community':
     test1 = test1.assign(genres=genres)
     with open(r"/Users/fabiotraina/Desktop/Project Work😱/SpotifyWrapped/my_data.csv", mode = 'a') as f:
         test1.to_csv(f, header=f.tell()==0, index=False)
+    with open(r"/Users/fabiotraina/Streamlit/my_data.csv", mode = 'a') as f:
+        test1.to_csv(f, header=f.tell()==0, sep='§',index=False)
 
-    df_songs = pd.read_csv('/Users/fabiotraina/Desktop/Project Work😱/SpotifyWrapped/my_data.csv',delimiter=',')
-    df_songs.drop_duplicates(subset=['time_played'], inplace=True)
+    df_songs = pd.read_csv('/Users/fabiotraina/Streamlit/my_data.csv',delimiter='§')
+    df_songs.drop_duplicates(subset=['time_played', 'id'], inplace=True)
     #st.write(df_songs)
 
     # Converti i millisecondi in minuti
@@ -1399,4 +1225,207 @@ if selected == 'Community':
     )
 
     st.altair_chart(chart, use_container_width=True)
+
+    # Creazione del dizionario vuoto
+    dizionario = {}
+
+    # Raggruppa i valori della colonna 2 in base ai valori della colonna 1
+    for key, group in df_songs.groupby('id'):
+        dizionario[key] = group['genres'].tolist()
+
+    for key, value in dizionario.items():
+        for i in range(len(value)):
+            if isinstance(value[i], list):
+                value[i] = [str(elem) for elem in value[i]]
+                value[i] = "§".join(value[i])
+            else:
+                value[i] = str(value[i])
+                value[i] = value[i].replace("§", ",")
+                value[i] = value[i].replace(";", ",")
+        dizionario[key] = value
+    
+    # Inizializza il contatore
+    contatore = Counter()
+
+    # Itera sul dizionario e conta le occorrenze di ciascun valore
+    for chiave, lista_valori in dizionario.items():
+        for valore in lista_valori:
+            contatore.update([valore])
+
+    # Inizializza il contatore
+    contatore = Counter()
+
+    # Itera sul dizionario e conta le occorrenze di ciascun valore
+    for chiave, lista_stringhe in dizionario.items():
+        for stringa in lista_stringhe:
+            lista_valori = ast.literal_eval(stringa)
+            contatore.update(lista_valori)
+
+    conteggi_generi = {}
+    for chiave, valore in dizionario.items():
+        generi = []
+        for elemento in valore:
+            lista_generi = eval(elemento)
+            generi.extend(lista_generi)
+        conteggi_generi[chiave] = Counter(generi)
+
+    tutti_utenti = []
+    tutti_generi =[]
+    for chiave, valore in dizionario.items():
+        generi = []
+        for elemento in valore:
+            lista_generi = eval(elemento)
+            generi.extend(lista_generi)
+        conteggio_generi = Counter(generi)
+        dizionario_generi = dict(conteggio_generi)
+        tutti_utenti.append(dizionario_generi)
+        cont = (f"Chiave: {chiave}, conteggio generi: {dizionario_generi}")
+        for genere in generi:
+            if genere not in tutti_generi:
+                tutti_generi.append(genere)
+
+    vettore_utente = []
+    for utente in tutti_utenti:
+        t = []
+        for genere in tutti_generi:
+            if genere in utente:
+                t.append(utente[genere])
+            else:
+                t.append(0)
+        vettore_utente.append(t)
+
+    for i, utente in enumerate(tutti_utenti):
+        t = []
+        for genere in tutti_generi:
+            if genere in utente:
+                t.append(utente[genere])
+            else:
+                t.append(0)
+        vettore_utente.append(t)
+
+    
+    indice_utente = list(dizionario.keys()).index(user_id)
+    vettore_utente_attuale = vettore_utente[indice_utente]
+
+    d = np.array(vettore_utente)
+    d_a = np.array(vettore_utente_attuale)
+    dist = np.linalg.norm(d[3]-d.mean(0))
+    max_distance = np.linalg.norm(np.ones(d.shape[1]) - d.mean(0))
+    normalized_dist = dist / max_distance
+    st.metric(label="distanza eu", value=dist)
+
+    cos_sim = dot(d_a, d.mean(0))/(norm(d_a)*norm(d.mean(0)))
+    cos_sim_p = cos_sim * 100
+    st.metric(label="cos", value="{:.2f} %".format(cos_sim_p))
+
+    set_a = set(d_a)
+    set_b = set(d.mean(0))
+
+    intersection = len(set_a & set_b)
+    union = len(set_a | set_b)
+    jaccard = intersection / union
+    jaccard_p = jaccard * 100
+    st.metric(label="jaccard", value="{:.2f} %".format(jaccard_p))
+
+# Definisci il valore da visualizzare sul gauge
+    value = jaccard_p
+
+    def create_gauge_chart(value, title=None):
+        # Crea il grafico Gauge
+        fig = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = value,
+            number = {'suffix': '%'},
+            gauge = {'axis': {'range': [0, 100]},
+                    'bar': {'color': "#00CC96",'thickness': 1},
+                    'threshold': {
+                        'line': {'color': "red", 'width': 4},
+                        'thickness': 0.75,
+                        'value': 60}}))
+
+        if title:
+            fig.update_layout(
+            height=300,
+            title={'text': title,
+                'x':0.5,
+                'y':0.9,
+                'xanchor': 'center',
+                'yanchor': 'top'
+            }
+        )
+
+
+        # Imposta la dimensione del grafico Gauge
+        fig.update_layout(height=300)
+
+        # Visualizza il grafico Gauge in Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            create_gauge_chart(jaccard_p,"jaccard")
+        with col2:
+            create_gauge_chart(cos_sim_p,"cos")
+        with col3:
+            create_gauge_chart(normalized_dist, "dist eu")
+
+
+    a = df_songs.groupby(["id"])["genres"].apply(list).reset_index(name='new')
+    documents = []
+    for index,data in a.iterrows():
+        documents.append(data["new"])
+
+    from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+    import nltk
+    nltk.download('punkt')
+    from nltk.tokenize import word_tokenize
+    tagged_documents = [TaggedDocument(words=_d, tags=[str(i)]) for i, _d in enumerate(documents)]
+
+    def train_and_save(force_train=False,saved_model_name="d2v.model"):
+        max_epochs = 12
+        vec_size = 300
+        alpha = 0.025
+
+        model = Doc2Vec(vector_size=vec_size,
+                        alpha=alpha, 
+                        min_alpha=0.00025,
+                        min_count=1,
+                        dm = 1)
+            
+        model.build_vocab(tagged_documents)
+
+        for epoch in range(max_epochs):
+            print('iteration {0}'.format(epoch))
+            model.train(tagged_documents,
+                        total_examples=model.corpus_count,
+                        epochs=model.epochs)
+            # decrease the learning rate
+            model.alpha -= 0.0002
+            # fix the learning rate, no decay
+            model.min_alpha = model.alpha
+        dir(model)
+        model.save("model.bin")
+        print("Model Saved")
+
+    train_and_save()
+    model = Doc2Vec.load("model.bin")
+    model.alpha
+
+    scores = []
+    threshold = 0.70
+    num = 4 # number of users
+    for i in range(0,num):
+        for j in range(0,num):
+            score = model.wv.n_similarity(documents[i],documents[j])
+            obj = {}
+            obj['i'] = i
+            obj['j'] = j
+            obj['similarity'] = score
+            scores.append(obj)
+
+    matrix = pd.DataFrame(scores, columns=['i', 'j', 'similarity'])
+    import seaborn as sns
+    graph_c = matrix.pivot("i","j","similarity")
+    sns.heatmap(graph_c, cmap="YlGnBu", square = 'true')
+    st.pyplot()
 #endregion
